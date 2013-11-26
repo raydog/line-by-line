@@ -24,6 +24,7 @@ var LineByLineReader = function (filepath, options) {
 	this._lineFragment = '';
 	this._paused = false;
 	this._end = false;
+	this._endSent = false;
 
 	events.EventEmitter.call(this);
 
@@ -70,6 +71,13 @@ LineByLineReader.prototype._initStream = function () {
 	this._readStream = readStream;
 };
 
+LineByLineReader.prototype._emitEnd = function () {
+	if (!this._endSent) {
+		this._endSent = true;
+		this.emit('end');
+	}
+}
+
 LineByLineReader.prototype._nextLine = function () {
 	var self = this,
 		line;
@@ -80,14 +88,14 @@ LineByLineReader.prototype._nextLine = function () {
 
 		if (!this._paused) {
 			process.nextTick(function () {
-				self.emit('end');
+				self._emitEnd();
 			});
 		}
 		return;
 	}
 
 	if (this._end) {
-		this.emit('end');
+		this._emitEnd();
 		return;
 	}
 
